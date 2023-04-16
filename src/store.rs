@@ -2,6 +2,7 @@ use sqlx::{PgPool, postgres::PgPoolOptions};
 
 use crate::{models::account::Account, custom_errors::store::Error};
 
+#[derive(Debug, Clone)]
 pub struct Store {
     pub db_pool: PgPool,
 }

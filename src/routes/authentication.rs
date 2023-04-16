@@ -1,6 +1,6 @@
 use warp::{Filter, Reply, Rejection, path};
 
-use crate::controllers::authentication::{login, registration};
+use crate::{controllers::authentication::{login, register_account}, store::Store};
 
 pub fn login_route() -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     warp::post()
@@ -10,10 +10,12 @@ pub fn login_route() -> impl Filter<Extract = (impl Reply,), Error = Rejection> 
         .and_then(login)
 }
 
-pub fn registration_route() -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
+pub fn registration_route(store: Store) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
+    let store_filter = warp::any().map(move || store.clone());
     warp::post()
         .and(path("registration"))
         .and(path::end())
+        .and(store_filter.clone())
         .and(warp::body::json())
-        .and_then(registration)
+        .and_then(register_account)
 }
