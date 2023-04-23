@@ -11,25 +11,24 @@ pub struct RegistrationController {
     repository: Arc<Store>,
 }
 
-// #[derive(Debug)]
-// enum RegistrationError {
-//     UserExists,
-// }
-
-// impl Reject for RegistrationError {}
-
 impl RegistrationController {
     pub fn new(store: Arc<Store>) -> Self {
         Self { repository: store }
     }
 
-    pub fn register_account(&self, account: Account) -> impl warp::Future<Output = Result<impl Reply, Rejection>> + Send + '_ {
+    // The Future type itself requires a lifetime parameter to be specified, which is used to specify the
+    // lifetime of the returned Future.
+    // Note that naming the lifetime parameter explicitly can make the code easier to read and understand,
+    // but it is not necessary in this case because the anonymous lifetime '_ can be used to elide the 
+    // lifetime parameter and let the Rust compiler infer the lifetime automatically.
+    pub fn register_account(&self, account: &Account)
+        -> impl warp::Future<Output = Result<impl Reply, Rejection>> + Send + '_ {
     
         let hashed_password = self.hash_password(account.password.as_bytes());
     
         let account = Account {
-            id: account.id,
-            email: account.email,
+            id: account.id.to_owned(),
+            email: account.email.to_owned(),
             password: hashed_password,
         };
 

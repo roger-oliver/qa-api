@@ -21,7 +21,7 @@ pub fn registration_route(store: Arc<Store>) -> impl Filter<Extract = (impl Repl
         .and_then(move |account: Account| {
             let controller = registration_controller.clone();
             async move {
-                controller.register_account(account.clone()).await
+                controller.register_account(&account).await
             }
         })
 }
