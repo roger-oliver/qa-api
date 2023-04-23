@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use routes::authentication::{login_route, registration_route};
 use store::Store;
 use warp::{Filter, Reply};
@@ -8,16 +10,16 @@ mod controllers;
 mod store;
 mod custom_errors;
 
-pub async fn run(store: Store) {
+pub async fn run(store: Arc<Store>) {
 
-    let routes = build_routes(store).await;
+    let routes = build_routes(Arc::clone(&store)).await;
     
     warp::serve(routes)
         .run(([127, 0, 0, 1], 8081))
         .await;
 }
 
-pub async fn setup_store() -> Store {
+pub async fn setup_store() -> Arc<Store> {
     let store = Store::new(&format!(
         "postgres://{}:{}@{}:{}/{}", "postgres", "postgres", "localhost", 5432, "qa_api_db"))
     .await
@@ -27,15 +29,15 @@ pub async fn setup_store() -> Store {
         .run(&store.clone().db_pool)
         .await.unwrap();
 
-    return store;
+    return Arc::new(store);
 }
 
-async fn build_routes(store: Store) -> impl Filter<Extract = (impl Reply,)> + Clone {
+async fn build_routes(store: Arc<Store>) -> impl Filter<Extract = (impl Reply,)> + Clone {
     let cors = warp::cors()
         .allow_any_origin()
         .allow_methods(vec!["POST"]);
 
     login_route()
-    .or(registration_route(store.clone()))
+    .or(registration_route(Arc::clone(&store)))
     .with(cors)
 }
