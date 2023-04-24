@@ -1,6 +1,12 @@
+use qa_api::config::Config;
+
 #[tokio::main]
 pub async fn main() {
-    let store = qa_api::setup_store().await;
+    dotenv::dotenv().ok();
 
-    qa_api::run(store).await;
+    let config = Config::new().expect("Config can't be set");
+
+    let store = qa_api::setup_store(&config).await;
+
+    qa_api::run(&config, store).await;
 }

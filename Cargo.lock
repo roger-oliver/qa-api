@@ -1137,6 +1137,7 @@ name = "qa-api"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "dotenv",
  "paseto",
  "rand",
  "rust-argon2",
