@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use config::Config;
 use routes::authentication::{login_route, registration_route};
 use store::Store;
 use warp::{Filter, Reply};
@@ -10,18 +11,25 @@ mod controllers;
 mod store;
 mod custom_errors;
 
-pub async fn run(store: Arc<Store>) {
+pub mod config;
+
+pub async fn run(config: &Config, store: Arc<Store>) {
 
     let routes = build_routes(Arc::clone(&store)).await;
     
     warp::serve(routes)
-        .run(([127, 0, 0, 1], 8081))
+        .run(([127, 0, 0, 1], config.api_port))
         .await;
 }
 
-pub async fn setup_store() -> Arc<Store> {
+pub async fn setup_store(config: &Config) -> Arc<Store> {
     let store = Store::new(&format!(
-        "postgres://{}:{}@{}:{}/{}", "postgres", "postgres", "localhost", 5432, "qa_api_db"))
+            "postgres://{}:{}@{}:{}/{}",
+            config.db_user,
+            config.db_password,
+            config.db_host,
+            config.db_port,
+            config.db_name))
     .await
     .unwrap();
 
