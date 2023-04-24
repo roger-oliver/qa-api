@@ -31,7 +31,7 @@ impl Store {
             }
     }
 
-    pub async fn get_account(&self, email: String) -> Result<Account, Error> {
+    pub async fn get_account(&self, email: &str) -> Result<Account, Error> {
         match sqlx::query("SELECT * FROM public.accounts where email = $1;")
             .bind(email)
             .map(|row: PgRow| Account {

@@ -7,7 +7,9 @@ use warp::{Filter, Reply};
 
 mod routes;
 mod models;
-mod controllers;
+mod controllers {
+    pub mod authentication;
+}
 mod store;
 mod custom_errors;
 
@@ -45,7 +47,7 @@ async fn build_routes(store: Arc<Store>) -> impl Filter<Extract = (impl Reply,)>
         .allow_any_origin()
         .allow_methods(vec!["POST"]);
 
-    login_route()
+    login_route(Arc::clone(&store))
     .or(registration_route(Arc::clone(&store)))
     .with(cors)
 }

@@ -1,19 +1,18 @@
 use std::{sync::Arc, env};
-
 use argon2::Config;
 use chrono::Utc;
 use paseto::PasetoBuilder;
 use rand::Rng;
-use warp::{Reply, Rejection, hyper::StatusCode, Future, reply::json};
+use warp::{Reply, Rejection, hyper::StatusCode, Future, reply::json, reject::custom};
 
 use crate::{models::account::{Account, AccountId}, store::Store, custom_errors::account::Error};
 
 #[derive(Debug, Clone)]
-pub struct RegistrationController {
+pub struct AuthenticationController {
     repository: Arc<Store>,
 }
 
-impl RegistrationController {
+impl AuthenticationController {
     pub fn new(store: Arc<Store>) -> Self {
         Self { repository: store }
     }
@@ -45,7 +44,7 @@ impl RegistrationController {
     pub fn login(&self, login: Account)
         -> impl Future<Output = Result<impl Reply, Rejection>> + Send + '_ {
         async move {
-            match self.repository.get_account(login.email).await {
+            match self.repository.get_account(&login.email).await {
                 Ok(account) => match self.verify_password(&account.password, login.password.as_bytes()) {
                     Ok(verified) => {
                         if verified {
@@ -53,10 +52,12 @@ impl RegistrationController {
                                 account.id.expect("Account Id not found")
                             )))
                         } else {
-                            Err(custom(Error))
+                            Err(custom(Error::WrongCredentials))
                         }
-                    }
-                }
+                    },
+                    Err(e) => Err(custom(Error::ArgonLibraryError(e))),
+                },
+                Err(e) => Err(custom(e)),
             }
         }
     }
