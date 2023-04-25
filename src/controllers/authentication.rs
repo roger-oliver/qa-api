@@ -22,7 +22,7 @@ impl AuthenticationController {
     // Note that naming the lifetime parameter explicitly can make the code easier to read and understand,
     // but it is not necessary in this case because the anonymous lifetime '_ can be used to elide the 
     // lifetime parameter and let the Rust compiler infer the lifetime automatically.
-    pub fn register_account(&self, account: &Account)
+    pub fn register_account(&self, account: Account)
         -> impl warp::Future<Output = Result<impl Reply, Rejection>> + Send + '_ {
     
         let hashed_password = self.hash_password(account.password.as_bytes());

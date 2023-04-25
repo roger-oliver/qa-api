@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use config::Config;
+use controllers::authentication::AuthenticationController;
 use routes::authentication::{login_route, registration_route};
 use store::Store;
 use warp::{Filter, Reply};
@@ -47,7 +48,9 @@ async fn build_routes(store: Arc<Store>) -> impl Filter<Extract = (impl Reply,)>
         .allow_any_origin()
         .allow_methods(vec!["POST"]);
 
-    login_route(Arc::clone(&store))
-    .or(registration_route(Arc::clone(&store)))
+    let auth_controller = Arc::new(AuthenticationController::new(Arc::clone(&store)));
+
+    login_route(auth_controller.clone())
+    .or(registration_route(auth_controller.clone()))
     .with(cors)
 }
