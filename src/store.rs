@@ -1,6 +1,6 @@
-use sqlx::{PgPool, postgres::PgPoolOptions};
+use sqlx::{PgPool, postgres::{PgPoolOptions, PgRow}, Row};
 
-use crate::{models::account::Account, custom_errors::store::Error};
+use crate::{models::account::{Account, AccountId}, custom_errors::store::Error};
 
 #[derive(Debug, Clone)]
 pub struct Store {
@@ -25,6 +25,23 @@ impl Store {
             .execute(&self.db_pool)
             .await {
                 Ok(_) => Ok(true),
+                Err(error) => {
+                    Err(Error::DatabaseQueryError(error))
+                }
+            }
+    }
+
+    pub async fn get_account(&self, email: &str) -> Result<Account, Error> {
+        match sqlx::query("SELECT * FROM public.accounts where email = $1;")
+            .bind(email)
+            .map(|row: PgRow| Account {
+                id: Some(AccountId(row.get("id"))),
+                email: row.get("email"),
+                password: row.get("password")
+            })
+            .fetch_one(&self.db_pool)
+            .await {
+                Ok(account) => Ok(account),
                 Err(error) => {
                     Err(Error::DatabaseQueryError(error))
                 }
