@@ -50,7 +50,7 @@ async fn build_routes(store: Arc<Store>) -> impl Filter<Extract = (impl Reply,)>
 
     let auth_controller = Arc::new(AuthenticationController::new(Arc::clone(&store)));
 
-    login_route(auth_controller.clone())
-    .or(registration_route(auth_controller.clone()))
+    login_route(Arc::clone(&auth_controller))
+    .or(registration_route(Arc::clone(&auth_controller)))
     .with(cors)
 }
