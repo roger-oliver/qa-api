@@ -1,5 +1,8 @@
 use std::fmt::Display;
 
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Question {
     pub id: QuestionId,
     pub title: String,
@@ -17,6 +20,7 @@ impl Display for Question {
     }
 }
 
+#[derive(Debug, Deserialize, Serialize)]
 // used to create new questions, deserialising from post;
 pub struct NewQuestion {
     pub title: String,
@@ -24,6 +28,7 @@ pub struct NewQuestion {
     pub tags: Option<Vec<String>>
 }
 
+#[derive(Debug, Deserialize, Serialize)]
 pub struct QuestionId(pub i32);
 
 impl Display for QuestionId {
