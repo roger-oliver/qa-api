@@ -6,6 +6,8 @@ use argon2::Error as ArgonError;
 pub enum Error {
     WrongCredentials,
     ArgonLibraryError(ArgonError),
+    CannotDecryptToken,
+    Unauthorized,
 }
 
 impl Display for Error {
@@ -16,6 +18,12 @@ impl Display for Error {
             },
             Error::WrongCredentials => {
                 write!(f, "Wrong Credentials")
+            },
+            Error::CannotDecryptToken => {
+                write!(f, "Not possible to decrypt informed token")
+            },
+            Error::Unauthorized => {
+                write!(f, "you are not authorized to use this resource")
             }
         }
     }

@@ -1,8 +1,9 @@
 use std::sync::Arc;
 
 use config::Config;
-use controllers::authentication::AuthenticationController;
-use routes::authentication::{login_route, registration_route};
+use controllers::{authentication::AuthenticationController, question::QuestionController};
+use custom_errors::custom_error_recover::return_custom_error;
+use routes::{authentication::{login_route, registration_route}, question::{add_question_route, get_question_route, get_questions_route}};
 use store::Store;
 use warp::{Filter, Reply};
 
@@ -10,6 +11,7 @@ mod routes;
 mod models;
 mod controllers {
     pub mod authentication;
+    pub mod question;
 }
 mod store;
 mod custom_errors;
@@ -49,8 +51,13 @@ async fn build_routes(store: Arc<Store>) -> impl Filter<Extract = (impl Reply,)>
         .allow_methods(vec!["POST"]);
 
     let auth_controller = Arc::new(AuthenticationController::new(Arc::clone(&store)));
+    let question_controller = Arc::new(QuestionController::new(Arc::clone(&store)));
 
     login_route(Arc::clone(&auth_controller))
     .or(registration_route(Arc::clone(&auth_controller)))
+    .or(add_question_route(Arc::clone(&question_controller)))
+    .or(get_question_route(Arc::clone(&question_controller)))
+    .or(get_questions_route(Arc::clone(&question_controller)))
     .with(cors)
+    .recover(return_custom_error)
 }
