@@ -113,7 +113,7 @@ impl Store {
     pub async fn get_questions(&self, limit: Option<i16>, offset: i16) -> Result<Vec<Question>, Error> {
         let result = sqlx::query(
             "SELECT id, title, content, tags, account_id, created_on
-                   FROM public.question
+                   FROM public.questions
                   ORDER BY created_on desc
                   LIMIT $1
                  OFFSET $2",

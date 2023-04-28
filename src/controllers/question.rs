@@ -1,10 +1,11 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use warp::{reject::custom, reply::json, Future, Rejection, Reply};
 
 use crate::{
     models::{
         account::Session,
+        pagination::{extract_pagination, Pagination},
         question::{NewQuestion, QuestionId},
     },
     store::Store,
@@ -44,6 +45,28 @@ impl QuestionController {
             let result = self.repository.get_question(QuestionId(id)).await;
             match result {
                 Ok(question) => Ok(json(&question)),
+                Err(e) => Err(custom(e)),
+            }
+        }
+    }
+
+    pub fn get_questions(
+        &self,
+        params: HashMap<String, String>,
+    ) -> impl Future<Output = Result<impl Reply, Rejection>> + Send + '_ {
+        async move {
+            let mut pagination = Pagination::default();
+
+            if !params.is_empty() {
+                pagination = extract_pagination(params)?;
+            }
+
+            let result = self
+                .repository
+                .get_questions(pagination.limit, pagination.offset)
+                .await;
+            match result {
+                Ok(questions) => Ok(json(&questions)),
                 Err(e) => Err(custom(e)),
             }
         }

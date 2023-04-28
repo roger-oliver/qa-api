@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use warp::{path, Filter, Rejection, Reply};
+use warp::{path, Filter, Rejection, Reply, query};
 
 use crate::{
     controllers::{authentication::AuthenticationController, question::QuestionController},
@@ -31,5 +31,18 @@ pub fn get_question_route(
         .and_then(move |id| {
             let controller = question_controller.clone();
             async move { controller.get_question(id).await }
+        })
+}
+
+pub fn get_questions_route(
+    question_controller: Arc<QuestionController>,
+) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
+    warp::get()
+        .and(path("questions"))
+        .and(path::end())
+        .and(query())
+        .and_then(move |params| {
+            let controller = question_controller.clone();
+            async move { controller.get_questions(params).await }
         })
 }
