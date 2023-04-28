@@ -1,10 +1,15 @@
 use std::sync::Arc;
 
-use warp::{Filter, Reply, Rejection, path};
+use warp::{path, Filter, Rejection, Reply};
 
-use crate::{controllers::{question::QuestionController, authentication::AuthenticationController}, models::{question::NewQuestion, account::Session}};
+use crate::{
+    controllers::{authentication::AuthenticationController, question::QuestionController},
+    models::{account::Session, question::NewQuestion},
+};
 
-pub fn add_question_route(question_controller: Arc<QuestionController>) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
+pub fn add_question_route(
+    question_controller: Arc<QuestionController>,
+) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
     warp::post()
         .and(path("question"))
         .and(path::end())
@@ -13,5 +18,18 @@ pub fn add_question_route(question_controller: Arc<QuestionController>) -> impl 
         .and_then(move |session: Session, new_question: NewQuestion| {
             let controller = question_controller.clone();
             async move { controller.create_question(session, new_question).await }
+        })
+}
+
+pub fn get_question_route(
+    question_controller: Arc<QuestionController>,
+) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
+    warp::get()
+        .and(path("question"))
+        .and(path::param::<i32>())
+        .and(path::end())
+        .and_then(move |id| {
+            let controller = question_controller.clone();
+            async move { controller.get_question(id).await }
         })
 }

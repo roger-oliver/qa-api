@@ -3,7 +3,7 @@ use std::sync::Arc;
 use config::Config;
 use controllers::{authentication::AuthenticationController, question::QuestionController};
 use custom_errors::custom_error_recover::return_custom_error;
-use routes::{authentication::{login_route, registration_route}, question::add_question_route};
+use routes::{authentication::{login_route, registration_route}, question::{add_question_route, get_question_route}};
 use store::Store;
 use warp::{Filter, Reply};
 
@@ -56,6 +56,7 @@ async fn build_routes(store: Arc<Store>) -> impl Filter<Extract = (impl Reply,)>
     login_route(Arc::clone(&auth_controller))
     .or(registration_route(Arc::clone(&auth_controller)))
     .or(add_question_route(Arc::clone(&question_controller)))
+    .or(get_question_route(Arc::clone(&question_controller)))
     .with(cors)
     .recover(return_custom_error)
 }

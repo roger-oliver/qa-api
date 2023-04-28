@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Question {
     pub id: QuestionId,
     pub title: String,
@@ -28,7 +28,7 @@ pub struct NewQuestion {
     pub tags: Option<Vec<String>>
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
 pub struct QuestionId(pub i32);
 
 impl Display for QuestionId {

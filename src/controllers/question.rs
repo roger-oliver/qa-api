@@ -5,7 +5,7 @@ use warp::{reject::custom, reply::json, Future, Rejection, Reply};
 use crate::{
     models::{
         account::Session,
-        question::{NewQuestion},
+        question::{NewQuestion, QuestionId},
     },
     store::Store,
 };
@@ -30,6 +30,19 @@ impl QuestionController {
                 .create_question(new_question, session.account_id)
                 .await
             {
+                Ok(question) => Ok(json(&question)),
+                Err(e) => Err(custom(e)),
+            }
+        }
+    }
+
+    pub fn get_question(
+        &self,
+        id: i32,
+    ) -> impl Future<Output = Result<impl Reply, Rejection>> + Send + '_ {
+        async move {
+            let result = self.repository.get_question(QuestionId(id)).await;
+            match result {
                 Ok(question) => Ok(json(&question)),
                 Err(e) => Err(custom(e)),
             }
