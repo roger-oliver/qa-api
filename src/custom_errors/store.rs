@@ -15,7 +15,6 @@ impl Display for Error {
         match &*self {
             Error::DatabaseQueryError(err) => write!(f, "Database query error: {}", err),
             Error::MigrationError(err) => write!(f, "Database migration error: {}", err),
-            
         }
     }
 }

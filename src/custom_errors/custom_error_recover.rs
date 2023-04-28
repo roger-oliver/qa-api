@@ -23,6 +23,9 @@ pub async fn return_custom_error(r: Rejection) -> Result<impl Reply, Rejection> 
                     ))
                 }
             }
+            sqlx::Error::RowNotFound => {
+                Ok(with_status("Entry not found", StatusCode::NOT_FOUND))
+            }
             _ => {
                     Ok(with_status(
                         "Cannot process data: {err}",

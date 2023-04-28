@@ -103,7 +103,10 @@ impl Store {
         .await;
         match result {
             Ok(question) => Ok(question),
-            Err(e) => Err(Error::DatabaseQueryError(e)),
+            Err(e) => {
+                println!("error not existing question: {:?}", e);
+                Err(Error::DatabaseQueryError(e))
+            },
         }
     }
 
