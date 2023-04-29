@@ -104,7 +104,6 @@ impl Store {
         match result {
             Ok(question) => Ok(question),
             Err(e) => {
-                println!("error not existing question: {:?}", e);
                 Err(Error::DatabaseQueryError(e))
             },
         }
@@ -134,4 +133,68 @@ impl Store {
             Err(e) => Err(Error::DatabaseQueryError(e)),
         }
     }
+
+    pub async fn update_question(
+        &self,
+        question: NewQuestion,
+        question_id: QuestionId
+    ) -> Result<Question, Error> {
+        // the update can only be applied when the user is the entry's owner.
+        // checked by "is_question_owner"
+        let result = sqlx::query("UPDATE questions SET title = $1, content = $2, tags = $3
+        WHERE id = $4
+        RETURNING id, title, content, tags")
+            .bind(question.title)
+            .bind(question.content)
+            .bind(question.tags)
+            .bind(question_id.0)
+            .map(|row: PgRow| Question {
+                id: question_id,
+                title: row.get("title"),
+                content: row.get("content"),
+                tags: row.get("tags"),
+            })
+            .fetch_one(&self.db_pool)
+            .await;
+
+        match result {
+            Ok(question) => Ok(question),
+            Err(e) => Err(Error::DatabaseQueryError(e)),
+        }
+    }
+
+    pub async fn delete_question(
+        &self,
+        question_id: QuestionId
+    ) -> Result<bool, Error> {
+        // the update can only be applied when the user is the entry's owner.
+        // checked by "is_question_owner"
+        let result = sqlx::query("DELETE FROM public.questions
+            WHERE id = $1")
+            .bind(question_id.0)
+            .execute(&self.db_pool)
+            .await;
+        match result {
+            Ok(_) => Ok(true),
+            Err(e) => Err(Error::DatabaseQueryError(e)),
+        }
+    }
+
+    pub async fn is_question_owner(
+        &self,
+        question_id: QuestionId,
+        account_id: AccountId
+    ) -> Result<bool, Error> {
+        let result = sqlx::query("SELECT * FROM public.questions where id = $1 and account_id = $2")
+            .bind(question_id.0)
+            .bind(account_id.0)
+            .fetch_optional(&self.db_pool)
+            .await;
+
+        match result {
+            Ok(question) => Ok(question.is_some()),
+            Err(e) => Err(Error::DatabaseQueryError(e)),
+        }
+    }
+
 }

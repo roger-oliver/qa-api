@@ -4,7 +4,7 @@ use warp::{path, Filter, Rejection, Reply, query};
 
 use crate::{
     controllers::{authentication::AuthenticationController, question::QuestionController},
-    models::{account::Session, question::NewQuestion},
+    models::{account::Session, question::{NewQuestion, QuestionId}},
 };
 
 pub fn add_question_route(
@@ -44,5 +44,34 @@ pub fn get_questions_route(
         .and_then(move |params| {
             let controller = question_controller.clone();
             async move { controller.get_questions(params).await }
+        })
+}
+
+pub fn update_question_route(
+    question_controller: Arc<QuestionController>,
+) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
+    warp::put()
+        .and(path("question"))
+        .and(path::param::<i32>())
+        .and(path::end())
+        .and(AuthenticationController::auth())
+        .and(warp::body::json())
+        .and_then(move |id, session: Session, question: NewQuestion| {
+            let controller = question_controller.clone();
+            async move { controller.update_question(session, question, QuestionId(id)).await }
+        })
+}
+
+pub fn delete_question_route(
+    question_controller: Arc<QuestionController>,
+) -> impl Filter<Extract = (impl Reply,), Error = Rejection> + Clone {
+    warp::delete()
+        .and(path("question"))
+        .and(path::param::<i32>())
+        .and(path::end())
+        .and(AuthenticationController::auth())
+        .and_then(move |id, session: Session| {
+            let controller = question_controller.clone();
+            async move { controller.delete_question(session, QuestionId(id)).await }
         })
 }

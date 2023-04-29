@@ -36,6 +36,8 @@ pub async fn return_custom_error(r: Rejection) -> Result<impl Reply, Rejection> 
     // custom return error when user gives a wrong credentials
     } else if let Some(account::Error::WrongCredentials) = r.find() {
         Ok(with_status("invalid credentials", StatusCode::UNAUTHORIZED))
+    } else if let Some(account::Error::Unauthorized) = r.find() {
+        Ok(with_status("you are not authorised", StatusCode::UNAUTHORIZED))
     } else {
 
         if r.is_not_found() {
