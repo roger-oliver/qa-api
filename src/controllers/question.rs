@@ -1,8 +1,14 @@
 use std::{collections::HashMap, sync::Arc};
 
-use warp::{reject::custom, reply::json, Future, Rejection, Reply};
+use warp::{
+    hyper::StatusCode,
+    reject::custom,
+    reply::{json, with_status},
+    Future, Rejection, Reply,
+};
 
 use crate::{
+    custom_errors::account,
     models::{
         account::Session,
         pagination::{extract_pagination, Pagination},
@@ -71,4 +77,49 @@ impl QuestionController {
             }
         }
     }
+
+    pub fn update_question(
+        &self,
+        session: Session,
+        question: NewQuestion,
+        question_id: QuestionId,
+    ) -> impl Future<Output = Result<impl Reply, Rejection>> + Send + '_ {
+        async move {
+            if self
+                .repository
+                .is_question_owner(question_id, session.account_id)
+                .await?
+            {
+                let result = self.repository.update_question(question, question_id).await;
+                match result {
+                    Ok(question) => Ok(json(&question)),
+                    Err(e) => Err(custom(e)),
+                }
+            } else {
+                Err(custom(account::Error::Unauthorized))
+            }
+        }
+    }
+
+    pub fn delete_question(
+        &self,
+        session: Session,
+        question_id: QuestionId,
+    ) -> impl Future<Output = Result<impl Reply, Rejection>> + Send + '_ {
+        async move {
+            if self.repository.is_question_owner(question_id, session.account_id).await? {
+                let result = self.repository.delete_question(question_id).await;
+                match result {
+                    Ok(_) => Ok(with_status(
+                        format!("question id: {} deleted", question_id.0),
+                        StatusCode::OK
+                    )),
+                    Err(e) => Err(custom(e))
+                }
+            } else {
+                Err(custom(account::Error::Unauthorized))
+            }
+        }
+    }
+
 }
