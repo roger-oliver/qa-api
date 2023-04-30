@@ -9,17 +9,16 @@ use warp::{
 
 use crate::{
     custom_errors::account::Error,
-    models::account::{Account, AccountId, Session},
-    store::Store,
+    models::account::{Account, AccountId, Session}, repository::Repository,
 };
 
 #[derive(Debug, Clone)]
 pub struct AuthenticationController {
-    repository: Arc<Store>,
+    repository: Arc<Repository>,
 }
 
 impl AuthenticationController {
-    pub fn new(store: Arc<Store>) -> Self {
+    pub fn new(store: Arc<Repository>) -> Self {
         Self { repository: store }
     }
 

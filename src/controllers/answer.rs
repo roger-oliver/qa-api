@@ -7,15 +7,15 @@ use crate::{
         account::Session,
         answer::{AnswerDTO, AnswerId},
     },
-    store::Store, custom_errors::account,
+    custom_errors::account, repository::Repository,
 };
 
 pub struct AnswerController {
-    pub repository: Arc<Store>,
+    pub repository: Arc<Repository>,
 }
 
 impl AnswerController {
-    pub fn new(store: Arc<Store>) -> Self {
+    pub fn new(store: Arc<Repository>) -> Self {
         Self { repository: store }
     }
 

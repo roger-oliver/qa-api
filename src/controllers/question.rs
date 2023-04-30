@@ -13,16 +13,15 @@ use crate::{
         account::Session,
         pagination::{extract_pagination, Pagination},
         question::{NewQuestion, QuestionId},
-    },
-    store::Store,
+    }, repository::Repository,
 };
 
 pub struct QuestionController {
-    pub repository: Arc<Store>,
+    pub repository: Arc<Repository>,
 }
 
 impl QuestionController {
-    pub fn new(store: Arc<Store>) -> Self {
+    pub fn new(store: Arc<Repository>) -> Self {
         Self { repository: store }
     }
 

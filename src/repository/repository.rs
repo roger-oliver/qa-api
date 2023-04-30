@@ -4,7 +4,7 @@ use sqlx::{
 };
 
 use crate::{
-    custom_errors::store::Error,
+    custom_errors::repository::Error,
     models::{
         account::{Account, AccountId},
         answer::{Answer, AnswerDTO, AnswerId},
@@ -13,18 +13,18 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-pub struct Store {
+pub struct Repository {
     pub db_pool: PgPool,
 }
 
-impl Store {
+impl Repository {
     pub async fn new(db_url: &str) -> Result<Self, sqlx::Error> {
         let db_pool = PgPoolOptions::new()
             .max_connections(5)
             .connect_lazy(db_url)
             .expect("Failed to connect to posgresql");
 
-        Ok(Store { db_pool })
+        Ok(Repository { db_pool })
     }
 
     pub async fn add_account(&self, account: Account) -> Result<bool, Error> {
