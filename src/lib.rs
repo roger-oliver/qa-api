@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use config::Config;
-use controllers::{authentication::AuthenticationController, question::QuestionController};
+use controllers::{authentication::AuthenticationController, question::QuestionController, answer::AnswerController};
 use custom_errors::custom_error_recover::return_custom_error;
-use routes::{authentication::{login_route, registration_route}, question::{add_question_route, get_question_route, get_questions_route, update_question_route, delete_question_route}};
+use routes::{authentication::{login_route, registration_route}, question::{add_question_route, get_question_route, get_questions_route, update_question_route, delete_question_route}, answer::{create_answer_route, update_answer_route}};
 use store::Store;
 use warp::{Filter, Reply};
 
@@ -12,6 +12,7 @@ mod models;
 mod controllers {
     pub mod authentication;
     pub mod question;
+    pub mod answer;
 }
 mod store;
 mod custom_errors;
@@ -52,6 +53,7 @@ async fn build_routes(store: Arc<Store>) -> impl Filter<Extract = (impl Reply,)>
 
     let auth_controller = Arc::new(AuthenticationController::new(Arc::clone(&store)));
     let question_controller = Arc::new(QuestionController::new(Arc::clone(&store)));
+    let answer_controller = Arc::new(AnswerController::new(Arc::clone(&store)));
 
     login_route(Arc::clone(&auth_controller))
     .or(registration_route(Arc::clone(&auth_controller)))
@@ -60,6 +62,8 @@ async fn build_routes(store: Arc<Store>) -> impl Filter<Extract = (impl Reply,)>
     .or(get_questions_route(Arc::clone(&question_controller)))
     .or(update_question_route(Arc::clone(&question_controller)))
     .or(delete_question_route(Arc::clone(&question_controller)))
+    .or(create_answer_route(Arc::clone(&answer_controller)))
+    .or(update_answer_route(Arc::clone(&answer_controller)))
     .with(cors)
     .recover(return_custom_error)
 }
