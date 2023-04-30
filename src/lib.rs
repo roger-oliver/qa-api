@@ -12,6 +12,7 @@ mod models;
 mod controllers {
     pub mod authentication;
     pub mod question;
+    pub mod answer;
 }
 mod store;
 mod custom_errors;

@@ -202,6 +202,19 @@ impl Store {
         }
     }
 
+    pub async fn is_answer_owner(&self, answer_id: AnswerId, account_id: AccountId) -> Result<bool, Error> {
+        let result = sqlx::query("select * from public.answers where id = $1 and account_id = $2")
+            .bind(answer_id.0)
+            .bind(account_id.0)
+            .fetch_optional(&self.db_pool)
+            .await;
+
+        match result {
+            Ok(answer) => Ok(answer.is_some()),
+            Err(e) => Err(Error::DatabaseQueryError(e))
+        }
+    }
+
     pub async fn create_answer(
         &self,
         answer: AnswerDTO,
