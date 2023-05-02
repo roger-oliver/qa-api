@@ -3,31 +3,38 @@ use sqlx::{
     PgPool, Row,
 };
 
+use async_trait::async_trait;
+
 use crate::{
-    custom_errors::store::Error,
+    custom_errors::repository::Error,
     models::{
         account::{Account, AccountId},
         answer::{Answer, AnswerDTO, AnswerId},
-        question::{NewQuestion, Question, QuestionId},
+        question::{QuestionDTO, Question, QuestionId},
     },
 };
 
+use super::database_repository::DatabaseRepository;
+
 #[derive(Debug, Clone)]
-pub struct Store {
+pub struct Repository {
     pub db_pool: PgPool,
 }
 
-impl Store {
+impl Repository {
     pub async fn new(db_url: &str) -> Result<Self, sqlx::Error> {
         let db_pool = PgPoolOptions::new()
             .max_connections(5)
             .connect_lazy(db_url)
             .expect("Failed to connect to posgresql");
 
-        Ok(Store { db_pool })
+        Ok(Repository { db_pool })
     }
+}
 
-    pub async fn add_account(&self, account: Account) -> Result<bool, Error> {
+#[async_trait]
+impl DatabaseRepository for Repository {
+    async fn add_account(&self, account: Account) -> Result<bool, Error> {
         match sqlx::query(
             "INSERT INTO accounts (email, password) 
             VALUES ($1, $2)  returning id, email",
@@ -42,7 +49,7 @@ impl Store {
         }
     }
 
-    pub async fn get_account(&self, email: &str) -> Result<Account, Error> {
+    async fn get_account(&self, email: &str) -> Result<Account, Error> {
         match sqlx::query("SELECT * FROM public.accounts where email = $1;")
             .bind(email)
             .map(|row: PgRow| Account {
@@ -58,9 +65,9 @@ impl Store {
         }
     }
 
-    pub async fn create_question(
+    async fn create_question(
         &self,
-        question: NewQuestion,
+        question: QuestionDTO,
         account_id: AccountId,
     ) -> Result<Question, Error> {
         match sqlx::query(
@@ -87,7 +94,7 @@ impl Store {
         }
     }
 
-    pub async fn get_question(&self, question_id: QuestionId) -> Result<Question, Error> {
+    async fn get_question(&self, question_id: QuestionId) -> Result<Question, Error> {
         let result = sqlx::query(
             "SELECT id, title, content, tags, account_id, created_on
                    FROM public.questions
@@ -108,7 +115,7 @@ impl Store {
         }
     }
 
-    pub async fn get_questions(
+    async fn get_questions(
         &self,
         limit: Option<i16>,
         offset: i16,
@@ -137,9 +144,9 @@ impl Store {
         }
     }
 
-    pub async fn update_question(
+    async fn update_question(
         &self,
-        question: NewQuestion,
+        question: QuestionDTO,
         question_id: QuestionId,
     ) -> Result<Question, Error> {
         // the update can only be applied when the user is the entry's owner.
@@ -168,7 +175,7 @@ impl Store {
         }
     }
 
-    pub async fn delete_question(&self, question_id: QuestionId) -> Result<bool, Error> {
+    async fn delete_question(&self, question_id: QuestionId) -> Result<bool, Error> {
         // the update can only be applied when the user is the entry's owner.
         // checked by "is_question_owner"
         let result = sqlx::query(
@@ -184,7 +191,7 @@ impl Store {
         }
     }
 
-    pub async fn is_question_owner(
+    async fn is_question_owner(
         &self,
         question_id: QuestionId,
         account_id: AccountId,
@@ -202,7 +209,7 @@ impl Store {
         }
     }
 
-    pub async fn is_answer_owner(&self, answer_id: AnswerId, account_id: AccountId) -> Result<bool, Error> {
+    async fn is_answer_owner(&self, answer_id: AnswerId, account_id: AccountId) -> Result<bool, Error> {
         let result = sqlx::query("select * from public.answers where id = $1 and account_id = $2")
             .bind(answer_id.0)
             .bind(account_id.0)
@@ -215,7 +222,7 @@ impl Store {
         }
     }
 
-    pub async fn create_answer(
+    async fn create_answer(
         &self,
         answer: AnswerDTO,
         account_id: AccountId,
@@ -241,7 +248,7 @@ impl Store {
         }
     }
 
-    pub async fn update_answer(&self, answer: AnswerDTO, answer_id: AnswerId) -> Result<Answer, Error> {
+    async fn update_answer(&self, answer: AnswerDTO, answer_id: AnswerId) -> Result<Answer, Error> {
         let result = sqlx::query("UPDATE public.answers
             SET content=$1
             WHERE id=$2

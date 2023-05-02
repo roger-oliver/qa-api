@@ -1,6 +1,6 @@
 use warp::{reject::Rejection, Reply, reply::with_status, hyper::StatusCode};
 
-use super::{store::Error, account};
+use super::{repository::Error, account};
 
 // all postgres errors should be treated as string.
 // that is lucky that the 23 category is only numbers

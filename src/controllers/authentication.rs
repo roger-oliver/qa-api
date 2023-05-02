@@ -2,7 +2,7 @@ use argon2::Config;
 use chrono::Utc;
 use paseto::PasetoBuilder;
 use rand::Rng;
-use std::{env, sync::Arc, future};
+use std::{env, future, sync::Arc};
 use warp::{
     header, hyper::StatusCode, reject::custom, reply::json, Filter, Future, Rejection, Reply,
 };
@@ -10,16 +10,16 @@ use warp::{
 use crate::{
     custom_errors::account::Error,
     models::account::{Account, AccountId, Session},
-    store::Store,
+    repository::{database_repository::DatabaseRepository, Repository},
 };
 
 #[derive(Debug, Clone)]
 pub struct AuthenticationController {
-    repository: Arc<Store>,
+    repository: Arc<Repository>,
 }
 
 impl AuthenticationController {
-    pub fn new(store: Arc<Store>) -> Self {
+    pub fn new(store: Arc<Repository>) -> Self {
         Self { repository: store }
     }
 

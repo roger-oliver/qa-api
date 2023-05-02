@@ -4,7 +4,7 @@ use warp::{path, Filter, Rejection, Reply, query};
 
 use crate::{
     controllers::{authentication::AuthenticationController, question::QuestionController},
-    models::{account::Session, question::{NewQuestion, QuestionId}},
+    models::{account::Session, question::{QuestionDTO, QuestionId}},
 };
 
 pub fn add_question_route(
@@ -15,7 +15,7 @@ pub fn add_question_route(
         .and(path::end())
         .and(AuthenticationController::auth())
         .and(warp::body::json())
-        .and_then(move |session: Session, new_question: NewQuestion| {
+        .and_then(move |session: Session, new_question: QuestionDTO| {
             let controller = question_controller.clone();
             async move { controller.create_question(session, new_question).await }
         })
@@ -56,7 +56,7 @@ pub fn update_question_route(
         .and(path::end())
         .and(AuthenticationController::auth())
         .and(warp::body::json())
-        .and_then(move |id, session: Session, question: NewQuestion| {
+        .and_then(move |id, session: Session, question: QuestionDTO| {
             let controller = question_controller.clone();
             async move { controller.update_question(session, question, QuestionId(id)).await }
         })
