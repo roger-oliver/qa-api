@@ -22,7 +22,7 @@ impl Display for Question {
 
 #[derive(Debug, Deserialize, Serialize)]
 // used to create new questions, deserialising from post;
-pub struct NewQuestion {
+pub struct QuestionDTO {
     pub title: String,
     pub content: String,
     pub tags: Option<Vec<String>>

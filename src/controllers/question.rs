@@ -12,8 +12,8 @@ use crate::{
     models::{
         account::Session,
         pagination::{extract_pagination, Pagination},
-        question::{NewQuestion, QuestionId},
-    }, repository::Repository,
+        question::{QuestionDTO, QuestionId},
+    }, repository::{Repository, database_repository::DatabaseRepository},
 };
 
 pub struct QuestionController {
@@ -28,7 +28,7 @@ impl QuestionController {
     pub fn create_question(
         &self,
         session: Session,
-        new_question: NewQuestion,
+        new_question: QuestionDTO,
     ) -> impl Future<Output = Result<impl Reply, Rejection>> + Send + '_ {
         async move {
             match self
@@ -80,7 +80,7 @@ impl QuestionController {
     pub fn update_question(
         &self,
         session: Session,
-        question: NewQuestion,
+        question: QuestionDTO,
         question_id: QuestionId,
     ) -> impl Future<Output = Result<impl Reply, Rejection>> + Send + '_ {
         async move {
