@@ -5,7 +5,7 @@ use controllers::{
     answer::AnswerController, authentication::AuthenticationController,
     question::QuestionController,
 };
-use custom_errors::custom_error_recover::return_custom_error;
+use custom_errors::{custom_error_recover::return_custom_error, repository::Error};
 use repository::Repository;
 use routes::{
     answer::{create_answer_route, update_answer_route},
@@ -43,17 +43,22 @@ pub async fn run(config: &Config, repository: Arc<Repository>) {
         .await;
 }
 
-pub async fn setup_store(config: &Config) -> Arc<Repository> {
+pub async fn setup_repository(config: &Config) -> Result<Arc<Repository>, Error> {
     let repository = Repository::new(&format!(
         "postgres://{}:{}@{}:{}/{}",
         config.db_user, config.db_password, config.db_host, config.db_port, config.db_name
     ))
     .await
-    .unwrap();
+    .map_err(|e| Error::DatabaseQueryError(e))?;
 
-    sqlx::migrate!().run(&repository.clone().db_pool).await.unwrap();
+    sqlx::migrate!()
+        .run(
+            &repository.clone().db_pool
+        )
+        .await
+        .map_err(|e| Error::MigrationError(e))?;
 
-    return Arc::new(repository);
+    Ok(Arc::new(repository))
 }
 
 async fn build_routes(repository: Arc<Repository>) -> impl Filter<Extract = (impl Reply,)> + Clone {
