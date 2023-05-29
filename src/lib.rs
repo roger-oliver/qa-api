@@ -15,6 +15,7 @@ use routes::{
         update_question_route,
     },
 };
+use tokio::sync::oneshot::{Sender, self};
 use warp::{Filter, Reply};
 
 mod models;
@@ -79,4 +80,27 @@ async fn build_routes(repository: Arc<Repository>) -> impl Filter<Extract = (imp
         .or(update_answer_route(Arc::clone(&answer_controller)))
         .with(cors)
         .recover(return_custom_error)
+}
+
+pub struct OneshotHandler {
+    pub sender: Sender<i32>,
+}
+
+pub async fn oneshot(repository: Arc<Repository>) -> OneshotHandler {
+    let routes = build_routes(repository).await;
+
+    let (tx, rx) = oneshot::channel::<i32>();
+
+    let socket: std::net::SocketAddr = "127.0.0.1:8080"
+        .to_string()
+        .parse()
+        .expect("address not valid.");
+
+    let (_, server) = warp::serve(routes).bind_with_graceful_shutdown(socket, async {
+        rx.await.ok();
+    });
+
+    tokio::task::spawn(server);
+
+    OneshotHandler { sender: tx }
 }
