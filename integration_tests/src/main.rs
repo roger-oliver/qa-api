@@ -19,14 +19,22 @@ struct QuestionDTO {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct Question {
-    pub id: i32,
-    pub title: String,
-    pub content: String,
-    pub tags: Option<Vec<String>>,
+struct Question {
+    id: i32,
+    title: String,
+    content: String,
+    tags: Option<Vec<String>>,
 }
 
+#[derive(Debug, Serialize)]
 struct AnswerDTO {
+    content: String,
+    question_id: i32
+}
+
+#[derive(Debug, Deserialize)]
+struct Answer {
+    id: i32,
     content: String,
     question_id: i32
 }
@@ -72,6 +80,7 @@ async fn main() -> Result<(), warp::Rejection> {
 
     let token: Token;
     let question_returned: Question;
+    let answer_returned: Answer;
 
     // create a test user to use throughout the tests
     let user = UserDTO {
@@ -123,6 +132,30 @@ async fn main() -> Result<(), warp::Rejection> {
         }
     }
 
+    print!("Running add answer!!!");
+    let answer = AnswerDTO {
+        content: "Answer content".to_string(),
+        question_id: question_returned.id
+    };
+
+    let result = std::panic::AssertUnwindSafe(
+        create_answer(
+            &token, 
+            &answer
+        )
+    ).catch_unwind().await;
+
+    match result {
+        Ok(a) => {
+            answer_returned = a;
+            println!(" ✓")
+        },
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
+    }
+
     Ok(())
 }
 
@@ -155,19 +188,42 @@ async fn login_user(user: &UserDTO) -> Token {
 }
 
 async fn create_question(token: &Token, question: &QuestionDTO) -> Question {
-    let client = Client::new();
-    let res = client.post("http://localhost:8080/question")
-        .header("Authorization", token.0.clone())
-        .json(&question)
-        .send()
-        .await
-        .unwrap()
-        .json::<Question>()
-        .await
-        .unwrap();
-
+    let res: Question = post_entity(token, &question, "http://localhost:8080/question").await;
     assert_eq!(res.id, 1);
     assert_eq!(res.content, question.content);
 
     res
+}
+
+async fn create_answer(token: &Token, answer: &AnswerDTO) -> Answer {
+    let res: Answer = post_entity(token, &answer, "http://localhost:8080/answer").await;
+    assert_eq!(res.id, 1);
+    assert_eq!(res.content, answer.content);
+
+    res
+}
+
+// below, we use Higher-Ranked Trait Bounds (HRTB) for S generic types, but why?
+// This is used when the trait implementation must be valid for any lifetime 'de,
+// not just a specific one. In this case, it means that S must implement the 
+// Deserialize trait for any lifetime, not just a specific lifetime 'a.
+// When S: for<'de> Deserialize<'de> is used, it means S must be a type that can 
+// be deserialized from any possible lifetime 'de. This is a requirement for the
+// json method from the reqwest library, because it doesn't know the exact 
+// lifetime of the data it will be receiving from the network, so it requires a 
+// type that can handle any possible lifetime.
+async fn post_entity<'a, T, S>(token: &'a Token, entity: &'a T, action_url: &'a str) -> S
+    where T: Serialize + 'a, S: for<'b> Deserialize<'b> {
+    let client = Client::new();
+    let response = client.post(action_url)
+        .header("Authorization", token.0.clone())
+        .json(&entity)
+        .send()
+        .await
+        .unwrap()
+        .json::<S>()
+        .await
+        .unwrap();
+
+    response
 }
