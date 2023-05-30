@@ -49,8 +49,6 @@ async fn main() -> Result<(), warp::Rejection> {
     // set the configuration
     let config = config::Config::new().expect("Config can't be set");
 
-    println!("{}", format!("postgres://{}:{}@{}:{}/{}", config.db_user, config.db_password, config.db_host, config.db_port, config.db_name));
-
     // to start integration test, we need to remove any db test instance
     let s = Command::new("sqlx")
         .arg("database")
@@ -80,7 +78,7 @@ async fn main() -> Result<(), warp::Rejection> {
 
     let token: Token;
     let question_returned: Question;
-    let answer_returned: Answer;
+    let _answer_returned: Answer;
 
     // create a test user to use throughout the tests
     let user = UserDTO {
@@ -147,7 +145,7 @@ async fn main() -> Result<(), warp::Rejection> {
 
     match result {
         Ok(a) => {
-            answer_returned = a;
+            _answer_returned = a;
             println!(" ✓")
         },
         Err(_) => {
@@ -199,6 +197,7 @@ async fn create_answer(token: &Token, answer: &AnswerDTO) -> Answer {
     let res: Answer = post_entity(token, &answer, "http://localhost:8080/answer").await;
     assert_eq!(res.id, 1);
     assert_eq!(res.content, answer.content);
+    assert_eq!(res.question_id, answer.question_id);
 
     res
 }
